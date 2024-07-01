@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cricket Scoring System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            background: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .score {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .buttons button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .buttons button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        .reset {
+            background-color: #dc3545;
+        }
+        .reset:hover {
+            background-color: #c82333;
+        }
+        .ball-score, .over-score {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #333;
+            padding: 10px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .ball-score div, .over-score div {
+            margin: 5px 0;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="score">
+            Runs: <span id="runs">0</span> | Wickets: <span id="wickets">0</span>
+        </div>
+        <div class="buttons">
+            <button onclick="addRuns(1)">1 Run</button>
+            <button onclick="addRuns(2)">2 Runs</button>
+            <button onclick="addRuns(3)">3 Runs</button>
+            <button onclick="addRuns(4)">4 Runs</button>
+            <button onclick="addRuns(6)">6 Runs</button>
+            <button onclick="addWicket()">Wicket</button>
+        </div>
+        <button class="reset" onclick="resetScore()">Reset</button>
+        <div class="ball-score" id="ballScore"></div>
+        <div class="over-score" id="overScore">
+            <div>Total Overs: <span id="totalOvers">0</span></div>
+            <div>Overs Done: <span id="oversDone">0</span></div>
+            <div id="overDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        let runs = 0;
+        let wickets = 0;
+        let ballCount = 0;
+        let overCount = 0;
+        const overBalls = 6;
+        let currentOverRuns = 0;
+        let currentOverWickets = 0;
+
+        // Load stored data
+        if (localStorage.getItem('runs')) {
+            runs = parseInt(localStorage.getItem('runs'));
+            wickets = parseInt(localStorage.getItem('wickets'));
+            ballCount = parseInt(localStorage.getItem('ballCount'));
+            overCount = parseInt(localStorage.getItem('overCount'));
+            currentOverRuns = parseInt(localStorage.getItem('currentOverRuns'));
+            currentOverWickets = parseInt(localStorage.getItem('currentOverWickets'));
+            document.getElementById('runs').innerText = runs;
+            document.getElementById('wickets').innerText = wickets;
+            document.getElementById('ballScore').innerHTML = localStorage.getItem('ballScores');
+            document.getElementById('overScore').innerHTML = localStorage.getItem('overScores');
+        }
+
+        function addRuns(run) {
+            runs += run;
+            currentOverRuns += run;
+            updateScore();
+            addBallScore(`${overCount}.${ballCount % overBalls + 1}: ${run} run${run > 1 ? 's' : ''}`);
+            ballCount++;
+            if (ballCount % overBalls === 0) {
+                overCount++;
+                updateOverScore();
+                clearBallScore();
+                currentOverRuns = 0;
+                currentOverWickets = 0;
+            }
+            saveToLocalStorage();
+        }
+
+        function addWicket() {
+            if (wickets < 10) {
+                wickets += 1;
+                currentOverWickets += 1;
+                updateScore();
+                addBallScore(`${overCount}.${ballCount % overBalls + 1}: Wicket`);
+                ballCount++;
+                if (ballCount % overBalls === 0) {
+                    overCount++;
+                    updateOverScore();
+                    clearBallScore();
+                    currentOverRuns = 0;
+                    currentOverWickets = 0;
+                }
+                saveToLocalStorage();
+            } else {
+                alert("All wickets are down!");
+            }
+        }
+
+        function resetScore() {
+            runs = 0;
+            wickets = 0;
+            ballCount = 0;
+            overCount = 0;
+            currentOverRuns = 0;
+            currentOverWickets = 0;
+            document.getElementById('runs').innerText = runs;
+            document.getElementById('wickets').innerText = wickets;
+            document.getElementById('ballScore').innerHTML = '';
+            document.getElementById('overScore').innerHTML = `
+                <div>Total Overs: <span id="totalOvers">0</span></div>
+                <div>Overs Done: <span id="oversDone">0</span></div>
+                <div id="overDetails"></div>`;
+            localStorage.clear();
+        }
+
+        function updateScore() {
+            document.getElementById('runs').innerText = runs;
+            document.getElementById('wickets').innerText = wickets;
+        }
+
+        function addBallScore(text) {
+            const ballScoreDiv = document.createElement('div');
+            ballScoreDiv.innerText = text;
+            document.getElementById('ballScore').appendChild(ballScoreDiv);
+        }
+
+        function clearBallScore() {
+            document.getElementById('ballScore').innerHTML = '';
+        }
+
+        function updateOverScore() {
+            document.getElementById('totalOvers').innerText = overCount;
+            document.getElementById('oversDone').innerText = overCount;
+            const overDetailDiv = document.createElement('div');
+            overDetailDiv.innerText = `Over ${overCount}: ${currentOverRuns} runs, ${currentOverWickets} wicket${currentOverWickets > 1 ? 's' : ''}`;
+            document.getElementById('overDetails').appendChild(overDetailDiv);
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('runs', runs);
+            localStorage.setItem('wickets', wickets);
+            localStorage.setItem('ballCount', ballCount);
+            localStorage.setItem('overCount', overCount);
+            localStorage.setItem('currentOverRuns', currentOverRuns);
+            localStorage.setItem('currentOverWickets', currentOverWickets);
+            localStorage.setItem('ballScores', document.getElementById('ballScore').innerHTML);
+            localStorage.setItem('overScores', document.getElementById('overScore').innerHTML);
+        }
+    </script>
+</body>
+</html>
